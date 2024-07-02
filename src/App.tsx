@@ -1,24 +1,40 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from 'react';
+import { Header } from './components/Header/Header';
+import { AuthPage } from './components/AuthPage/AuthPage';
+import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { $auth, setAuth, setUsername } from './context/auth';
+import { useStore } from 'effector-react';
+import { $alert } from './context/alert';
+import { Alert } from './components/Alert/Alert';
+import { CostsPage } from './components/CostsPage/CostsPage';
+import { getAuthDataFromLS, removeUser } from './utils/auth';
+
 
 function App() {
+  const isLoggedIn = useStore($auth);
+  const alert =  useStore($alert);
+  useEffect (() => {
+    const auth = getAuthDataFromLS();
+    if (!auth){
+      removeUser();
+    } else{
+      setAuth(true);
+      setUsername(auth.username);
+    }
+  })
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <Header />
+    {alert.alertText && <Alert props={alert} />}
+    <Router>
+      <Routes>
+        <Route path='/' element = {isLoggedIn ? <Navigate to = {'/budgets'}/> : <Navigate to ='login'/>}/>
+        <Route path='/registration' element = { isLoggedIn ? <Navigate to = {'/budgets'}/> : <AuthPage type = 'registration'/>}/>
+        <Route path='/login' element = { isLoggedIn ? <Navigate to = {'/budgets'}/> : <AuthPage type = 'login'/>}/>
+        <Route path='/budgets' element = {isLoggedIn ? <CostsPage/> : <Navigate to = {'/login'}/> }/>
+      </Routes>
+    </Router>
+   
     </div>
   );
 }
